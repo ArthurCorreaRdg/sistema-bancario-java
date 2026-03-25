@@ -20,23 +20,12 @@ public abstract class ContaBancaria {
         this.ativa = true;
     }
 
-    protected void receberTransferencia(BigDecimal valor){
-        validarContaAtiva();
+    public void receberTransferencia(BigDecimal valor){
+        validarContaAtiva(); // Sempre validar antes da operação
         validarValor(valor);
 
-        creditar(valor);
-        registrarTransacao(TipoTransacao.TRANSFERENCIA_RECEBIDA, valor);
-    }
-
-    public void transferir(ContaBancaria destino, BigDecimal valor) {
-        validarContaAtiva();
-        destino.validarContaAtiva();
-
-        this.sacar(valor);
-        destino.receberTransferencia(valor);
-
-        registrarTransacao(TipoTransacao.TRANSFERENCIA_ENVIO, valor);
-        destino.registrarTransacao(TipoTransacao.TRANSFERENCIA_RECEBIDA, valor);
+        creditar(valor); // realizar operação
+        registrarTransacao(TipoTransacao.TRANSFERENCIA_RECEBIDA, valor, saldo); //registrar saldo após operação
     }
 
     public void depositar(BigDecimal valor) {
@@ -45,7 +34,7 @@ public abstract class ContaBancaria {
         validarLimite(valor, LIMITE_DEPOSITO);
 
         creditar(valor);
-        registrarTransacao(TipoTransacao.DEPOSITO, valor);
+        registrarTransacao(TipoTransacao.DEPOSITO, valor, saldo);
     }
 
     public abstract void sacar(BigDecimal valor);
@@ -57,7 +46,7 @@ public abstract class ContaBancaria {
         validarSaldoSuficiente(valor);
 
         debitar(valor);
-        registrarTransacao(TipoTransacao.SAQUE, valor);
+        registrarTransacao(TipoTransacao.SAQUE, valor, saldo);
     }
 
     protected void debitar(BigDecimal valor) {
@@ -92,12 +81,16 @@ public abstract class ContaBancaria {
         }
     }
 
-    protected void registrarTransacao(TipoTransacao tipo, BigDecimal valor) {
-        transacoes.add(new Transacao(tipo, valor));
+    protected void registrarTransacao(TipoTransacao tipo, BigDecimal valor, BigDecimal saldoAtual) {
+        transacoes.add(new Transacao(tipo, valor, saldoAtual));
+    }
+
+    public void estornar (BigDecimal valor) {
+        saldo = saldo.add(valor);
     }
 
     public List<Transacao> getExtrato(){
-        return transacoes;
+        return List.copyOf(transacoes);
     }
 
     public String getNumeroConta() {
